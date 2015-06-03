@@ -14,7 +14,7 @@ ACTIONS = {
 # Thanks to Claudio Grondi for the correct set of numbers
 FILE_LIST_DIRECTORY = 0x0001
 
-path_to_watch = r"D:\workspace\python\autoUpload"
+path_to_watch = r"D:\workspace"
 hDir = win32file.CreateFile (
   path_to_watch,
   FILE_LIST_DIRECTORY,
