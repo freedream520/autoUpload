@@ -7,7 +7,11 @@
 [localdir]
 此处写要监控的本地目录<只需要写一条数据>
 [ignore]
-此处写需要忽略的监控文件列表<可以有多行信息>
+要忽略的文件名的匹配的正则表达式 需要在前面加上一个R作为前缀
+正则表达式要匹配的内容是一个相对路径 比如
+d:\workspace 是监控目录
+要忽略的文件是 d:\workspace\subdir\pic.txt
+那么正则表达式匹配的是subdir\pic.txt这个字符串
 '''
 
 SUPPORTED_PROTOCOL  = ('sftp', 'ftp')
@@ -40,13 +44,13 @@ class ConfigParser:
                     if line[0]=='[' and line[-1]==']':
                         currentKey  = line
                     else:
-                        if currentKey == 'remotedir':
+                        if currentKey in ('remotedir',  'localdir', 'username', 'password', 'host', 'port'):
                             configInfo[currentKey]  == line
                         elif currentKey == 'ignore':
                             if currentKey in configInfo:
-                                configInfo[currentKey].append(line)
+                                configInfo[currentKey].append(line[1:])
                             else:
-                                configInfo[currentKey]  = [line]
+                                configInfo[currentKey]  = [line[1:]]
                         elif currentKey == 'localdir':
                             configInfo[currentKey]  == line
                         elif currentKey == 'protocol':
@@ -54,9 +58,5 @@ class ConfigParser:
                                 configInfo[currentKey]  = line
                             else:
                                 raise ValueError
-                        elif currentKey == 'username':
-                            configInfo[currentKey]  = line
-                        elif currentKey == 'password':
-                            configInfo[currentKey]  = line
 
         return configInfo

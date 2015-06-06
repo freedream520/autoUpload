@@ -50,6 +50,7 @@ while 1:
     None
   )
   for action, file in results:
+    print(results)
     full_filename = os.path.join (path_to_watch, file)
     print full_filename, ACTIONS.get (action, "Unknown")
     print('--------------')
