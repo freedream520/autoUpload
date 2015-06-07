@@ -6,6 +6,7 @@ class EventFilter:
     '''
     def __init__(self, match_list):
         self.rules  = [re.compile(R) for R in match_list]
+        print(self.rules)
 
     def ignore(self,file_name):
         ignore  = False
@@ -13,4 +14,5 @@ class EventFilter:
             if rule.search(file_name):
                 ignore  = True
                 break
+        return ignore
 

@@ -36,23 +36,23 @@ class ConfigParser:
         configInfo  = {}
         with open(self.configFilePath,'r') as fp:
             currentKey  = ''
-            for line in fp.readline():
+            for line in fp:
                 line    = line.strip()
                 if len(line)<=0:
                     continue
                 else:
                     if line[0]=='[' and line[-1]==']':
-                        currentKey  = line
+                        currentKey  = line[1:-1]
                     else:
-                        if currentKey in ('remotedir',  'localdir', 'username', 'password', 'host', 'port'):
-                            configInfo[currentKey]  == line
+                        if currentKey in ('remotedir',  'localdir', 'username', 'password', 'host', 'port', 'logFile'):
+                            configInfo[currentKey]  = line
                         elif currentKey == 'ignore':
                             if currentKey in configInfo:
                                 configInfo[currentKey].append(line[1:])
                             else:
                                 configInfo[currentKey]  = [line[1:]]
                         elif currentKey == 'localdir':
-                            configInfo[currentKey]  == line
+                            configInfo[currentKey]  = line
                         elif currentKey == 'protocol':
                             if line in SUPPORTED_PROTOCOL:
                                 configInfo[currentKey]  = line

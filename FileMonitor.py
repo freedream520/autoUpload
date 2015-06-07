@@ -3,6 +3,8 @@ import win32file
 import win32con
 import time
 import os
+import logging
+LOG = logging.getLogger(__name__)
 
 class FileMonitor:
     ACTIONS = {
@@ -25,7 +27,7 @@ class FileMonitor:
         self.__directory    = directory
         self.__msgQ = msgQueue
         self.e_filter   = event_filter
-        self.lastEventTime  = None
+        self.lastEventTime  = 0
         self.lastFilename   = None
         self.lastEventCode  = None
 
@@ -35,7 +37,8 @@ class FileMonitor:
         :return: none
         """
         if not os.path.isdir(self.__directory):
-            raise Exception(u'要监控的目录不存在!')
+            LOG.info('监控目录不存在')
+            raise Exception('要监控的目录不存在!')
         hDir = win32file.CreateFile (
             self.__directory,
             self.FILE_LIST_DIRECTORY,
@@ -46,6 +49,7 @@ class FileMonitor:
             None
         )
         while 1:
+            LOG.info('in watching !!!')
             # 进入监听循环
             results = win32file.ReadDirectoryChangesW (
                 hDir,
@@ -60,38 +64,39 @@ class FileMonitor:
                 None,
                 None
             )
-            fileName    = results[1]
-            eventCode   = results[0]
-            fileType    = self.checkFileType(fileName)
-            instruction = {'code':eventCode,'name':fileName,'fileType':fileType, 'localFullPath':os.path.join(self.__directory, fileName)}
-            if not self.e_filter.ignore(fileName):
-                currentTime = time.time() * 1000
-                if eventCode in (1,2):
-                    self.__msgQ.append(instruction)
-                    self.lastEventTime  = currentTime
-                    self.lastEventCode  = eventCode
-                    self.lastFilename   = fileName
-                elif eventCode == 3:
-                    if (currentTime - self.lastEventTime) <= 500 and \
-                            (self.lastEventCode==3 or self.lastEventCode==1) or fileType == 1:       #如果上一次更新和本次更新相差时间小于500毫秒 并且上一次的操作是更新或创建动作 或者 是文件夹的状态更新 则忽略本次更新
-                        pass
-                    else:
+            LOG.info(results)
+            for eventCode,fileName in results:
+                fileType    = self.checkFileType(fileName)
+                instruction = {'code':eventCode, 'name':fileName.replace('\\', '/'),'fileType':fileType, 'localFullPath':os.path.join(self.__directory, fileName)}
+                if not self.e_filter.ignore(fileName):
+                    currentTime = time.time() * 1000
+                    if eventCode in (1,2):
+                        self.__msgQ.put(instruction)
                         self.lastEventTime  = currentTime
-                        self.lastEventCode  = 3
+                        self.lastEventCode  = eventCode
                         self.lastFilename   = fileName
-                        self.__msgQ.append(instruction)
-                elif eventCode == 4:
-                    self.lastEventTime  = currentTime
-                    self.lastEventCode  = 4
-                    self.lastFilename   = fileName
-                elif eventCode == 5:
-                    if self.lastEventCode != 4:                                     #如果上一次操作不是 rename from 则找不到文件的原始名称
-                        continue
-                    instruction = {'code':eventCode, 'newName':fileName, 'fileType':fileType, 'orgName':self.lastFilename}
-                    self.lastEventTime  = currentTime
-                    self.lastEventCode  = 5
-                    self.lastFilename   = fileName
-                    self.__msgQ.append(instruction)
+                    elif eventCode == 3:
+                        if fileType == 1:       #如果上一次更新和本次更新相差时间小于500毫秒 并且上一次的操作是更新或创建动作 或者 是文件夹的状态更新 则忽略本次更新
+                            pass
+                        else:
+                            self.lastEventTime  = currentTime
+                            self.lastEventCode  = 3
+                            self.lastFilename   = fileName
+                            self.__msgQ.put(instruction)
+                    elif eventCode == 4:
+                        self.lastEventTime  = currentTime
+                        self.lastEventCode  = 4
+                        self.lastFilename   = fileName
+                    elif eventCode == 5:
+                        if self.lastEventCode != 4:                                     #如果上一次操作不是 rename from 则找不到文件的原始名称
+                            continue
+                        instruction = {'code':eventCode, 'newName':fileName.replace('\\', '/'), 'fileType':fileType, 'orgName':self.lastFilename}
+                        self.lastEventTime  = currentTime
+                        self.lastEventCode  = 5
+                        self.lastFilename   = fileName
+                        self.__msgQ.put(instruction)
+                else:
+                    LOG.info('%s is ignored' % fileName)
 
 
     def checkFileType(self, name):
