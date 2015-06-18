@@ -54,4 +54,3 @@ while 1:
 
     full_filename = os.path.join (path_to_watch, file)
     print full_filename, ACTIONS.get (action, "Unknown")
-    print('--------------')

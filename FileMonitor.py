@@ -4,6 +4,7 @@ import win32con
 import time
 import os
 import logging
+
 LOG = logging.getLogger(__name__)
 
 class FileMonitor:
@@ -38,7 +39,8 @@ class FileMonitor:
         """
         if not os.path.isdir(self.__directory):
             LOG.info('监控目录不存在')
-            raise Exception('要监控的目录不存在!')
+            os._exit(1)
+            raise Exception('local directory not exist!')
         hDir = win32file.CreateFile (
             self.__directory,
             self.FILE_LIST_DIRECTORY,

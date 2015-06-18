@@ -55,6 +55,7 @@ class FileUploader:
             elif instruction['code'] == 5:
                  #'newName':fileName, 'fileType':fileType, 'orgName':self.lastFilename
                 self.sftp.rename(instruction['orgName'], instruction['newName'])
+            LOG.info('success ---- %s' % instruction)
         except socket.error, e:
             LOG.info('socket is closed -- reconnect ERROR:-- %s' % e)
             self.connectServer()

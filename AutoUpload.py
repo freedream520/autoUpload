@@ -17,6 +17,7 @@ import importlib
 import logging
 import time
 
+
 LOG = logging.getLogger(__name__)
 
 eventQueue  = Queue.Queue()             #事件队列 当监控器接受到事件后将事件信息发送到队列
@@ -71,7 +72,7 @@ def run():
     except Exception, e:
         print("config file error !! error %s" % e)
         exit(1)
-    logging.basicConfig(filename=global_settings['logFile'],level=logging.DEBUG)
+    logging.basicConfig(filename=global_settings['logFile'],level=logging.DEBUG, format='%(levelname)s:%(asctime)s:%(message)s')
 
     e_filter  = eventfilter.EventFilter(global_settings.get('ignore', {}))                              #事件过滤器
     monitor = FileMonitor.FileMonitor(global_settings['localdir'], eventQueue, e_filter)        #文件修改监控对象
@@ -82,7 +83,7 @@ def run():
         protocol    = importlib.import_module('protocol.'+global_settings['protocol'])
     except ImportError:
         print("unsuppurted protocol %s" % protocol)
-        LOG.info("不支持的协议类型 %s" % protocol)
+        LOG.info("unsuppurted protocol %s" % protocol)
         exit(1)
     uploader    = protocol.FileUploader(global_settings['username'], global_settings['password'],
                                         global_settings['remotedir'], global_settings['host'], global_settings['port'])
